@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distributed Logging System Design</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1219;
+    --surface2: #131c27;
+    --border: #1e2d40;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7fff6b;
+    --accent4: #ffcc00;
+    --text: #c8daea;
+    --muted: #4a6278;
+    --error: #ff4560;
+    --warn: #ffcc00;
+    --info: #00d4ff;
+    --success: #7fff6b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .container { max-width:1200px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 24px 32px;
+    border-bottom: 1px solid var(--border);
+    max-width: 1200px;
+    margin: 0 auto;
+    position:relative; z-index:1;
+  }
+  .tag {
+    font-size:10px; letter-spacing:3px; text-transform:uppercase;
+    color: var(--accent); background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 4px 12px; border-radius: 2px; display:inline-block; margin-bottom:16px;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px,5vw,52px); font-weight:800;
+    line-height:1.1;
+    background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .subtitle { color:var(--muted); font-size:13px; margin-top:10px; }
+
+  /* ── TABS ── */
+  .tabs {
+    display:flex; gap:2px; padding: 24px 24px 0;
+    max-width:1200px; margin:0 auto; position:relative; z-index:1;
+    overflow-x:auto;
+  }
+  .tab {
+    padding: 10px 20px; font-family:'JetBrains Mono',monospace;
+    font-size:12px; letter-spacing:1px; text-transform:uppercase;
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--muted); cursor:pointer; transition:all 0.2s;
+    white-space:nowrap;
+  }
+  .tab:hover { color:var(--text); border-color:var(--accent); }
+  .tab.active {
+    background:rgba(0,212,255,0.1); border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  /* ── SECTIONS ── */
+  .section { display:none; padding:24px; }
+  .section.active { display:block; }
+
+  /* ── CARDS ── */
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:24px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color:rgba(0,212,255,0.3); }
+  .card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+  }
+  .card.blue::before { background: var(--accent); }
+  .card.orange::before { background: var(--accent2); }
+  .card.green::before { background: var(--accent3); }
+  .card.yellow::before { background: var(--accent4); }
+
+  .card-title {
+    font-family:'Syne',sans-serif; font-weight:700;
+    font-size:14px; letter-spacing:1px; text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .card.blue .card-title { color:var(--accent); }
+  .card.orange .card-title { color:var(--accent2); }
+  .card.green .card-title { color:var(--accent3); }
+  .card.yellow .card-title { color:var(--accent4); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  @media(max-width:700px) { .grid-2,.grid-3 { grid-template-columns:1fr; } }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-diagram {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:4px; padding:32px;
+    display:flex; flex-direction:column; gap:0;
+    align-items:center; margin-bottom:16px;
+  }
+  .arch-row { display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .arch-node {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:4px; padding:12px 18px;
+    font-size:11px; text-align:center; min-width:110px;
+    transition: all 0.2s; cursor:default;
+  }
+  .arch-node:hover { transform:translateY(-2px); }
+  .arch-node .icon { font-size:20px; display:block; margin-bottom:4px; }
+  .arch-node.svc { border-color:var(--accent); color:var(--accent); }
+  .arch-node.col { border-color:var(--accent2); color:var(--accent2); }
+  .arch-node.bus { border-color:var(--accent4); color:var(--accent4); }
+  .arch-node.store { border-color:var(--accent3); color:var(--accent3); }
+  .arch-node.ui { border-color:var(--muted); color:var(--text); }
+  .arch-arrow {
+    text-align:center; color:var(--muted); font-size:22px;
+    padding:8px 0; width:100%;
+  }
+  .arch-label {
+    font-size:10px; color:var(--muted); letter-spacing:2px;
+    text-transform:uppercase; text-align:center;
+    padding:6px 0; width:100%;
+  }
+
+  /* ── LOG FORMAT ── */
+  .log-example {
+    background: #020609;
+    border: 1px solid var(--border);
+    border-radius:4px;
+    padding: 20px;
+    font-size: 12px;
+    line-height: 2;
+    overflow-x:auto;
+  }
+  .log-key { color:var(--muted); }
+  .log-string { color: #98c379; }
+  .log-num { color: #e5c07b; }
+  .log-error { color: var(--error); }
+  .log-warn { color: var(--warn); }
+  .log-info { color: var(--info); }
+  .log-debug { color: #c678dd; }
+
+  /* ── CHECKLIST ── */
+  .checklist { list-style:none; }
+  .checklist li {
+    display:flex; align-items:flex-start; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--border);
+    font-size:13px; line-height:1.6;
+  }
+  .checklist li:last-child { border-bottom:none; }
+  .check-icon {
+    width:20px; height:20px; border-radius:2px;
+    border:2px solid var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:2px; cursor:pointer;
+    transition:all 0.2s; font-size:12px;
+  }
+  .check-icon.done {
+    background:var(--accent); color:#000; border-color:var(--accent);
+  }
+  .check-icon.done::after { content:'✓'; }
+  .checklist li.done-item > .check-text { text-decoration:line-through; color:var(--muted); }
+
+  /* ── SEVERITY BADGE ── */
+  .severity { display:inline-flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .badge {
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    padding:3px 10px; border-radius:2px; font-weight:600;
+  }
+  .badge.error { background:rgba(255,69,96,0.15); color:var(--error); border:1px solid rgba(255,69,96,0.3); }
+  .badge.warn  { background:rgba(255,204,0,0.15);  color:var(--warn);  border:1px solid rgba(255,204,0,0.3); }
+  .badge.info  { background:rgba(0,212,255,0.1);   color:var(--info);  border:1px solid rgba(0,212,255,0.2); }
+  .badge.debug { background:rgba(198,120,221,0.1); color:#c678dd;      border:1px solid rgba(198,120,221,0.2); }
+  .badge.audit { background:rgba(127,255,107,0.1); color:var(--success); border:1px solid rgba(127,255,107,0.2); }
+
+  /* ── RETENTION TABLE ── */
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  th {
+    text-align:left; padding:10px 14px;
+    background:var(--surface2); color:var(--muted);
+    border:1px solid var(--border);
+    font-weight:400; letter-spacing:1px; text-transform:uppercase; font-size:10px;
+  }
+  td {
+    padding:10px 14px; border:1px solid var(--border);
+    vertical-align:top; line-height:1.6;
+  }
+  tr:hover td { background:var(--surface2); }
+
+  /* ── FLOW STEPS ── */
+  .flow { display:flex; flex-direction:column; gap:0; }
+  .flow-step {
+    display:flex; gap:16px; align-items:flex-start; padding:16px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .flow-step:last-child { border-bottom:none; }
+  .step-num {
+    font-family:'Syne',sans-serif; font-size:24px; font-weight:800;
+    color:var(--border); min-width:36px; line-height:1;
+  }
+  .step-content h3 { font-size:13px; color:var(--text); margin-bottom:4px; font-weight:600; }
+  .step-content p { font-size:12px; color:var(--muted); line-height:1.7; }
+  .step-content code {
+    font-size:11px; background:var(--surface2); padding:2px 6px;
+    border-radius:2px; color:var(--accent); border:1px solid var(--border);
+  }
+
+  /* ── ANIMATED PULSE ── */
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; } 50% { opacity:0.3; }
+  }
+  .live-dot {
+    display:inline-block; width:6px; height:6px;
+    background:var(--success); border-radius:50%;
+    margin-right:6px; animation: pulse-dot 1.5s infinite;
+  }
+
+  /* ── METRIC CARDS ── */
+  .metric-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+  .metric {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:4px; padding:16px;
+    text-align:center;
+  }
+  .metric-val {
+    font-family:'Syne',sans-serif; font-size:28px; font-weight:800;
+    color:var(--accent); line-height:1;
+  }
+  .metric-label { font-size:10px; color:var(--muted); margin-top:4px; letter-spacing:1px; text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">System Design</div>
+  <h1>Distributed Logging<br>Architecture</h1>
+  <p class="subtitle">Microservices · Debugging &amp; Error Tracking · Performance · Security Audit</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('arch')">01 Architecture</div>
+  <div class="tab" onclick="show('format')">02 Log Format</div>
+  <div class="tab" onclick="show('pipeline')">03 Pipeline</div>
+  <div class="tab" onclick="show('storage')">04 Storage &amp; Retention</div>
+  <div class="tab" onclick="show('checklist')">05 Implementation Checklist</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 1: ARCHITECTURE
+════════════════════════════════════════════ -->
+<div class="section active" id="arch">
+  <div class="container">
+
+    <div class="arch-diagram">
+      <div class="arch-label">▸ Services Layer</div>
+      <div class="arch-row">
+        <div class="arch-node svc"><span class="icon">🔷</span>Auth Service</div>
+        <div class="arch-node svc"><span class="icon">🔷</span>Order Service</div>
+        <div class="arch-node svc"><span class="icon">🔷</span>Payment Service</div>
+        <div class="arch-node svc"><span class="icon">🔷</span>User Service</div>
+        <div class="arch-node svc"><span class="icon">🔷</span>Gateway / API</div>
+      </div>
+      <div class="arch-arrow">↓ structured JSON logs (stdout/stderr)</div>
+
+      <div class="arch-label">▸ Collection Layer</div>
+      <div class="arch-row">
+        <div class="arch-node col"><span class="icon">📦</span>Fluent Bit<br><small>sidecar / DaemonSet</small></div>
+        <div class="arch-node col"><span class="icon">🔗</span>OpenTelemetry<br><small>traces + metrics</small></div>
+      </div>
+      <div class="arch-arrow">↓ forward &amp; enrich</div>
+
+      <div class="arch-label">▸ Message Bus</div>
+      <div class="arch-row">
+        <div class="arch-node bus"><span class="icon">⚡</span>Apache Kafka<br><small>logs · traces · audit</small></div>
+      </div>
+      <div class="arch-arrow">↓ consume streams</div>
+
+      <div class="arch-label">▸ Processing &amp; Storage</div>
+      <div class="arch-row">
+        <div class="arch-node store"><span class="icon">🔍</span>Elasticsearch<br><small>hot storage 30d</small></div>
+        <div class="arch-node store"><span class="icon">🗄️</span>S3 / GCS<br><small>cold archive 2yr</small></div>
+        <div class="arch-node store"><span class="icon">📊</span>Prometheus<br><small>metrics</small></div>
+        <div class="arch-node store"><span class="icon">🔐</span>Immutable Audit<br><small>WORM store</small></div>
+      </div>
+      <div class="arch-arrow">↓ visualize &amp; alert</div>
+
+      <div class="arch-label">▸ Observation Layer</div>
+      <div class="arch-row">
+        <div class="arch-node ui"><span class="icon">📈</span>Kibana / Grafana</div>
+        <div class="arch-node ui"><span class="icon">🚨</span>PagerDuty / Slack Alerts</div>
+        <div class="arch-node ui"><span class="icon">🕵️</span>Jaeger (Traces)</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card blue">
+        <div class="card-title">Correlation</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.8">Every log line carries a <code style="color:var(--accent);background:var(--surface2);padding:2px 5px">trace_id</code> and <code style="color:var(--accent);background:var(--surface2);padding:2px 5px">span_id</code> so you can trace one request across every service end-to-end.</p>
+      </div>
+      <div class="card orange">
+        <div class="card-title">Resilience</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.8">Kafka decouples producers from consumers. Services never block on logging. If your observability stack goes down, logs queue safely.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Separation</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.8">Audit logs go to a <strong>separate, append-only</strong> topic and WORM store — completely isolated from debug logs and untouchable by service code.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 2: LOG FORMAT
+════════════════════════════════════════════ -->
+<div class="section" id="format">
+  <div class="container">
+
+    <div class="card blue" style="margin-bottom:16px">
+      <div class="card-title">Standard Log Schema (JSON)</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">All services emit structured JSON. No free-text log messages. Fields are mandatory unless marked optional.</p>
+      <div class="log-example">
+{<br>
+&nbsp;&nbsp;<span class="log-key">"timestamp"</span>: <span class="log-string">"2025-11-14T09:32:11.482Z"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"level"</span>:     <span class="log-warn">"WARN"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"service"</span>:   <span class="log-string">"payment-service"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"version"</span>:   <span class="log-string">"v2.4.1"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"env"</span>:       <span class="log-string">"production"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"host"</span>:      <span class="log-string">"pod-payment-77b9f-x4k2p"</span>,<br>
+<br>
+&nbsp;&nbsp;<span class="log-key">// Correlation — links to distributed trace</span><br>
+&nbsp;&nbsp;<span class="log-key">"trace_id"</span>:  <span class="log-string">"4bf92f3577b34da6a3ce929d0e0e4736"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"span_id"</span>:   <span class="log-string">"00f067aa0ba902b7"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"request_id"</span>:<span class="log-string">"req_8f3kXp29Lm"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"user_id"</span>:   <span class="log-string">"usr_anon_a4e9c3"</span>, <span class="log-key">// hashed PII</span><br>
+<br>
+&nbsp;&nbsp;<span class="log-key">// Event</span><br>
+&nbsp;&nbsp;<span class="log-key">"event"</span>:     <span class="log-string">"payment.provider.timeout"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"message"</span>:   <span class="log-string">"Stripe gateway timeout after 5000ms"</span>,<br>
+&nbsp;&nbsp;<span class="log-key">"duration_ms"</span>:<span class="log-num">5012</span>,<br>
+<br>
+&nbsp;&nbsp;<span class="log-key">// Context (optional, structured)</span><br>
+&nbsp;&nbsp;<span class="log-key">"ctx"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="log-key">"order_id"</span>: <span class="log-string">"ord_9f3a2b"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="log-key">"amount_cents"</span>: <span class="log-num">4999</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="log-key">"currency"</span>: <span class="log-string">"USD"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="log-key">"retry_count"</span>: <span class="log-num">1</span><br>
+&nbsp;&nbsp;}<br>
+}
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card orange">
+        <div class="card-title">Severity Levels</div>
+        <div class="severity">
+          <span class="badge error">ERROR</span>
+          <span class="badge warn">WARN</span>
+          <span class="badge info">INFO</span>
+          <span class="badge debug">DEBUG</span>
+          <span class="badge audit">AUDIT</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:2;margin-top:8px">
+          <div><span style="color:var(--error)">ERROR</span> — Requires immediate attention / alerts</div>
+          <div><span style="color:var(--warn)">WARN</span>  — Degraded state, needs investigation</div>
+          <div><span style="color:var(--info)">INFO</span>  — Normal business events (production)</div>
+          <div><span style="color:#c678dd">DEBUG</span> — Verbose detail (disabled in prod)</div>
+          <div><span style="color:var(--success)">AUDIT</span> — Security events (always on, immutable)</div>
+        </div>
+      </div>
+      <div class="card green">
+        <div class="card-title">PII &amp; Privacy Rules</div>
+        <ul style="font-size:12px;color:var(--muted);line-height:2.2;list-style:none">
+          <li>✦ Never log passwords, tokens, or secrets</li>
+          <li>✦ Hash user IDs before logging (SHA-256 + salt)</li>
+          <li>✦ Truncate card numbers: last 4 digits only</li>
+          <li>✦ Mask emails: <code style="color:var(--accent);background:var(--surface2);padding:1px 5px">j***@example.com</code></li>
+          <li>✦ Strip full IP addresses from app logs</li>
+          <li>✦ Audit logs retain full identity (separate store)</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 3: PIPELINE
+════════════════════════════════════════════ -->
+<div class="section" id="pipeline">
+  <div class="container">
+
+    <div class="grid-2">
+      <div class="card blue">
+        <div class="card-title">Ingestion Pipeline</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h3>Emit to stdout/stderr</h3>
+              <p>Services log structured JSON only. No log files. Container runtime captures output. Use <code>pino</code>, <code>logrus</code>, or <code>structlog</code>.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h3>Fluent Bit Collector</h3>
+              <p>Deployed as Kubernetes DaemonSet. Tails container logs, parses JSON, enriches with pod/namespace metadata. Buffers locally on node.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h3>Kafka Topics</h3>
+              <p>Separate topics: <code>logs.app</code>, <code>logs.audit</code>, <code>metrics.perf</code>. Partitioned by service name. Retention: 7 days on bus.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <h3>Stream Processing</h3>
+              <p>Kafka Streams / Flink for anomaly detection, sampling, and routing. Drop DEBUG logs in prod. Flag ERRORs for immediate alerting.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <h3>Write to Stores</h3>
+              <p>Hot logs → Elasticsearch. Metrics → Prometheus. Audit → WORM. Cold archive → S3 with Parquet partitioning by service+date.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card orange">
+          <div class="card-title">Alerting Rules</div>
+          <table>
+            <tr><th>Condition</th><th>Action</th></tr>
+            <tr><td>ERROR rate &gt; 1% / min</td><td>PagerDuty P2</td></tr>
+            <tr><td>5xx spike &gt; 10 in 30s</td><td>PagerDuty P1</td></tr>
+            <tr><td>p99 latency &gt; 2s</td><td>Slack #alerts</td></tr>
+            <tr><td>Service silent &gt; 60s</td><td>PagerDuty P1</td></tr>
+            <tr><td>Audit: new IP + admin</td><td>Security team</td></tr>
+            <tr><td>Auth failures &gt; 10 / user</td><td>Auto-lock + alert</td></tr>
+          </table>
+        </div>
+        <div class="card yellow">
+          <div class="card-title">Sampling Strategy</div>
+          <ul style="font-size:12px;color:var(--muted);line-height:2.2;list-style:none">
+            <li>📌 <strong style="color:var(--text)">AUDIT / ERROR</strong> — 100% — never sample</li>
+            <li>📌 <strong style="color:var(--text)">WARN</strong> — 100% in prod, 50% staging</li>
+            <li>📌 <strong style="color:var(--text)">INFO</strong> — 100% prod, 10% high-volume paths</li>
+            <li>📌 <strong style="color:var(--text)">DEBUG</strong> — OFF in prod, 100% dev/staging</li>
+            <li>📌 <strong style="color:var(--text)">Traces</strong> — Head-based 10%, tail-based 100% for errors</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 4: STORAGE & RETENTION
+════════════════════════════════════════════ -->
+<div class="section" id="storage">
+  <div class="container">
+
+    <div class="metric-row">
+      <div class="metric"><div class="metric-val">3</div><div class="metric-label">Storage Tiers</div></div>
+      <div class="metric"><div class="metric-val">30d</div><div class="metric-label">Hot Retention</div></div>
+      <div class="metric"><div class="metric-val">1yr</div><div class="metric-label">Warm Retention</div></div>
+      <div class="metric"><div class="metric-val">7yr</div><div class="metric-label">Audit Archive</div></div>
+    </div>
+
+    <div class="card blue">
+      <div class="card-title">Tiered Storage Plan</div>
+      <table>
+        <tr>
+          <th>Tier</th><th>Store</th><th>Log Types</th><th>Retention</th><th>Access Pattern</th><th>Est. Cost</th>
+        </tr>
+        <tr>
+          <td><span style="color:var(--error)">● HOT</span></td>
+          <td>Elasticsearch</td>
+          <td>App, Error, Perf</td>
+          <td>30 days</td>
+          <td>Real-time search, dashboards, alerting</td>
+          <td>$$$ (SSD)</td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--warn)">● WARM</span></td>
+          <td>Elasticsearch (frozen) or ClickHouse</td>
+          <td>App, Perf</td>
+          <td>1 year</td>
+          <td>Ad-hoc queries, incident review</td>
+          <td>$$ (HDD)</td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--muted)">● COLD</span></td>
+          <td>S3 / GCS (Parquet)</td>
+          <td>All types</td>
+          <td>2+ years</td>
+          <td>Compliance, bulk analytics via Athena/BQ</td>
+          <td>$ (object)</td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--success)">● AUDIT</span></td>
+          <td>WORM (S3 Object Lock)</td>
+          <td>Security, Auth, Admin</td>
+          <td>7 years (legal)</td>
+          <td>Compliance review, forensics</td>
+          <td>$ + legal hold</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div class="card green">
+        <div class="card-title">Index Strategy (Elasticsearch)</div>
+        <ul style="font-size:12px;color:var(--muted);line-height:2.2;list-style:none">
+          <li>✦ One index per service per day: <code style="color:var(--accent);background:var(--surface2);padding:1px 5px">payment-2025.11.14</code></li>
+          <li>✦ ILM policy: hot→warm at 30d, delete at 365d</li>
+          <li>✦ Shard size: target 30–50GB per shard</li>
+          <li>✦ Audit index: separate cluster, no delete policy</li>
+          <li>✦ Force merge on rollover to reduce segment count</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <div class="card-title">Cost Controls</div>
+        <ul style="font-size:12px;color:var(--muted);line-height:2.2;list-style:none">
+          <li>✦ Drop DEBUG logs before Kafka (save ~40% volume)</li>
+          <li>✦ Compress with LZ4 in transit, Zstd at rest</li>
+          <li>✦ Deduplicate repeated ERROR bursts (token bucket)</li>
+          <li>✦ Sample high-frequency INFO events (&gt;1k/s)</li>
+          <li>✦ S3 Intelligent Tiering for cold archive</li>
+          <li>✦ Review top-volume services monthly</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 5: CHECKLIST
+════════════════════════════════════════════ -->
+<div class="section" id="checklist">
+  <div class="container">
+
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px"><span class="live-dot"></span>Click items to track your progress</p>
+
+    <div class="grid-2">
+
+      <div class="card blue">
+        <div class="card-title">Foundation</div>
+        <ul class="checklist" id="cl1">
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Define structured JSON schema — all services must conform</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Add trace_id + span_id injection via middleware (all services)</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set up OpenTelemetry SDK across all services</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Deploy Fluent Bit as DaemonSet on Kubernetes</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Deploy Kafka cluster with topics: logs.app, logs.audit, metrics.perf</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set DEBUG=OFF in all production configs</span></li>
+        </ul>
+      </div>
+
+      <div class="card orange">
+        <div class="card-title">Debugging &amp; Errors</div>
+        <ul class="checklist">
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Instrument all HTTP endpoints with request/response logging</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Capture stack traces on unhandled exceptions (structured, not raw)</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set up Elasticsearch index for app logs with ILM 30-day policy</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Create Kibana dashboard: error rate by service</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Configure alert: ERROR rate > 1% / minute → PagerDuty</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set up Jaeger for distributed trace visualization</span></li>
+        </ul>
+      </div>
+
+      <div class="card yellow">
+        <div class="card-title">Performance Monitoring</div>
+        <ul class="checklist">
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Log duration_ms on every outbound call (DB, HTTP, queue)</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Emit RED metrics: Rate, Errors, Duration per endpoint</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set up Prometheus scrape + Grafana dashboards</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Alert: p99 latency > 2s on critical paths</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Implement tail-based trace sampling for slow requests</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Weekly SLA report: uptime + error budget consumption</span></li>
+        </ul>
+      </div>
+
+      <div class="card green">
+        <div class="card-title">Security &amp; Audit</div>
+        <ul class="checklist">
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Audit every: login, logout, permission change, data export, admin action</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Separate Kafka topic + WORM S3 bucket for audit logs</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Implement PII hashing / masking in logging middleware</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Alert: > 10 auth failures per user in 5 minutes</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Alert: first-time admin login from new IP/country</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Encrypt audit logs at rest + restrict read access to security team</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Set 7-year retention with legal hold on audit bucket</span></li>
+          <li><div class="check-icon" onclick="toggle(this)"></div><span class="check-text">Run quarterly audit log access review</span></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;padding:20px;font-size:12px;color:var(--muted)" id="progress-display">
+      <span id="prog-count">0</span> items completed
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function toggle(el) {
+    const li = el.closest('li');
+    el.classList.toggle('done');
+    li.classList.toggle('done-item');
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const done = document.querySelectorAll('.check-icon.done').length;
+    const total = document.querySelectorAll('.check-icon').length;
+    document.getElementById('prog-count').textContent = done + ' / ' + total;
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
