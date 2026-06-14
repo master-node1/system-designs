@@ -21,7 +21,7 @@ export default function RootLayout({
               <span>hari_sireddi<span className="text-brand">.log()</span></span>
             </div>
             <nav className="flex items-center gap-6 text-sm font-medium text-zinc-400">
-              <a href="/#metrics" className="hover:text-zinc-100 transition-colors">Metrics</a>
+              <a href="/#skills" className="hover:text-zinc-100 transition-colors">Skills</a>
               <a href="/#experience" className="hover:text-zinc-100 transition-colors">Experience</a>
               <a href="/#projects" className="hover:text-zinc-100 transition-colors">Projects</a>
               <a href="/#blog" className="hover:text-zinc-100 transition-colors">Insights</a>

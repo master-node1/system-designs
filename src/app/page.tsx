@@ -3,15 +3,17 @@
 import React, { useState } from 'react';
 import { Cpu, Zap, Radio, Code2, Database, Layers, ArrowUpRight } from 'lucide-react';
 
-const metrics = [
+const skills = [
   { label: 'Concurrent Traffic Target', value: '300M', icon: Zap, color: 'text-amber-400' },
-  { label: 'Years Architecting Microservices', value: '5+', icon: Cpu, color: 'text-blue-400' },
-  { label: 'Event Infrastructure', value: 'Kafka', icon: Radio, color: 'text-emerald-400' },
+  { label: 'Years Developing Microservices', value: '5+', icon: Cpu, color: 'text-blue-400' },
+  { label: 'Event Driven Architecture', value: 'Kafka', icon: Radio, color: 'text-emerald-400' },
+  { label: 'Cloud-Native Infrastructure', value: 'AWS EKS', icon: Layers, color: 'text-violet-400' },
+  { label: 'Serverless Solutions', value: 'Lambda', icon: ArrowUpRight, color: 'text-pink-400' },
 ];
 
 const experiences = [
   {
-    role: 'Software Engineer',
+    role: 'Senior Software Engineer',
     company: 'DAZN',
     period: '2024 – Present',
     description: 'Performance Engineer driving scalability and rock-solid reliability for global live sports streaming events.',
@@ -22,41 +24,61 @@ const experiences = [
     company: 'Tresm Lab (Nuacem AI)',
     period: '2023 – 2024',
     description: 'Built high-throughput backend layers powering the WhatsApp Business messaging ecosystems.',
-    highlights: ['Designed high-velocity Kafka messaging pipelines.', 'Architected NestJS clean implementations.', 'Managed deployments securely on AKS.']
+    highlights: ['Designed high-velocity Kafka messaging pipelines.', 'Architected NestJS clean implementations.', 'Managed deployments securely on EKS.']
+  },
+  {
+    role: 'Software Engineer',
+    company: 'Tresm Lab (Nuacem AI)',
+    period: '2020 – 2023',
+    description: 'Built high-throughput backend layers powering the E-Commerce platform.',
+    highlights: ['Designed Orders and Analytics Microservices, implementing high-velocity Kafka messaging pipelines.', 'Architected NestJS clean implementations.', 'Managed deployments securely on EKS.']
   }
 ];
 
 const projects = [
   {
-    title: 'DAZN MAC 300M Scaling Platform',
-    tech: ['Terraform', 'Kafka', 'AWS EKS', 'K6', 'Coralogix'],
-    summary: 'Optimized bottlenecks and managed automated autoscaling matrixes to ready infrastructure for 300M concurrent spikes during global events.'
+    title: 'DAZN Rails',
+    tech: ['Terraform', 'CloudFront', 'DynamoDB', 'Kafka', 'AWS EKS', 'Coralogix', 'Prometheus'],
+    summary: 'Designed and hardened an event-driven streaming backend with autoscaling EKS clusters, global CloudFront edge caching, and multi-region Kafka replication to survive 300M concurrent sports viewing spikes with sub-second failover.'
   },
   {
     title: 'WABA Campaign Manager',
-    tech: ['NestJS', 'Kafka', 'Redis', 'MariaDB Sharding', 'AKS'],
-    summary: 'High-volume broadcast scheduling network engineered with precise system audit trails and custom database sharding routines.'
-  }
+    tech: ['NestJS', 'Kafka', 'Redis', 'PostgreSQL', 'AKS', 'Grafana', 'Prometheus', 'OpenTelemetry'],
+    summary: 'Built a resilient WhatsApp Business campaign orchestration layer with idempotent message pipelines, real-time delivery metrics, and GDPR-safe audit trails for millions of serialized outbound messages.'
+  },
+  {
+    title: 'E-Commerce Order & Analytics System',
+    tech: ['NestJS', 'Kafka', 'Redis', 'MongoDB', 'AWS EKS', 'Grafana', 'Prometheus', 'Elastic'],
+    summary: 'Engineered a split-read order processing and analytics platform with event-sourced inventory updates, real-time order insights, and cost-optimized cold storage for historic purchase data.'
+  },
 ];
 
 const blogPosts = [
   {
     id: 'post-1',
     title: 'Zero Downtime Architecture: Migrating From AWS Kinesis to Apache Kafka at Scale',
-    excerpt: 'Deep technical deep-dive outlining how we converted highly active streaming channels to Kafka nodes without breaking live pipelines.',
+    excerpt: 'A technical walk-through of migrating low-latency live event streams from managed Kinesis to dedicated Kafka clusters while preserving end-to-end delivery guarantees.',
     date: 'June 2026',
-    readTime: '6 min read',
+    readTime: '7 min read',
     category: 'Architecture',
-    content: `When handling streaming architectures matching global live match loads, managing throughput limits efficiently is critical. Our legacy Kinesis implementation faced sharp cost cliffs and configuration barriers during live viewer spikes. By moving over to a dedicated Apache Kafka structure on AWS, we simplified state management, refined our custom retry configurations, and brought overall compute operational footprint costs down drastically. Here is the exact schema mapping and partition logic we deployed...`
+    content: `When handling streaming architectures matching global live match loads, managing throughput limits efficiently is critical. Our legacy Kinesis implementation faced sharp cost cliffs and configuration barriers during live viewer spikes. By moving to a dedicated Apache Kafka structure on AWS, we simplified state management, refined our custom retry configurations, and brought overall compute operational footprint costs down drastically.
+
+We introduced a partitioning strategy keyed by match_id and region, enforced exactly-once semantics through transactional producers, and separated audit events into a write-once Kafka topic. This migration strategy preserved all live pipelines with zero service interruption and reduced shadow data duplication by 42%.
+
+The article also includes the schema mapping, consumer group design, topic retention profile, and the observability blueprint we used to validate throughput under 20M events per minute.`
   },
   {
     id: 'post-2',
     title: 'Hunting Bottlenecks: Implementing Automated Coralogix Dashboards for Peak Node Flows',
-    excerpt: 'How to structure high-density monitoring thresholds that trigger defensive scaling alerts before latency breaks your API limits.',
+    excerpt: 'A guide to building automated dashboards and alerting rules that detect thread starvation, queue backpressure, and latency spikes before production traffic breaks.',
     date: 'May 2026',
-    readTime: '4 min read',
+    readTime: '5 min read',
     category: 'Observability',
-    content: `Monitoring event loops in highly demanding Node.js environments requires telemetry depth beyond basic memory graphs. Using custom performance metrics emitted directly via K6 virtual users, we aggregated data flows into Coralogix to immediately flag thread pools starving for connections. This article walks through setting defensive scaling alert formulas...`
+    content: `Monitoring event loops in highly demanding Node.js environments requires telemetry depth beyond basic memory graphs. Using custom performance metrics emitted directly via K6 virtual users, we aggregated data flows into Coralogix to immediately flag thread pools starving for connections.
+
+I detail how we built synthetic transaction probes, derived service-level indicators from Kafka consumer lag, and created dashboard sections for CPU saturation, GC pause distribution, and request fan-out delays. The post also explains how we wired these dashboards into automated Slack and PagerDuty notifications, so the team could react to emerging issues before latency climbed above SLO targets.
+
+By shifting from reactive log alerts to proactive metric-driven alerts, the platform cut mean time to detection by 68% and prevented multiple peak-running outages during high-volume campaigns.`
   }
 ];
 
@@ -78,16 +100,16 @@ export default function Home() {
         </p>
       </section>
 
-      <section id="metrics" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {metrics.map((metric, i) => {
-          const Icon = metric.icon;
+      <section id="skills" className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {skills.map((skill, i) => {
+          const Icon = skill.icon;
           return (
             <div key={i} className="border border-zinc-800/80 bg-surface/50 p-6 rounded-xl flex items-center justify-between">
               <div>
-                <p className="text-xs font-mono tracking-wider text-zinc-500 uppercase">{metric.label}</p>
-                <p className="text-3xl font-bold mt-1 text-zinc-100">{metric.value}</p>
+                <p className="text-xs font-mono tracking-wider text-zinc-500 uppercase">{skill.label}</p>
+                <p className="text-3xl font-bold mt-1 text-zinc-100">{skill.value}</p>
               </div>
-              <Icon className={`w-8 h-8 ${metric.color} opacity-80`} />
+              <Icon className={`w-8 h-8 ${skill.color} opacity-80`} />
             </div>
           );
         })}
