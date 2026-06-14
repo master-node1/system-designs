@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Cpu, Zap, Radio, Code2, Database, Layers, ArrowUpRight } from 'lucide-react';
+import { BLOG_POSTS } from '@/lib/blogs';
 
 const skills = [
   { label: 'Concurrent Traffic Target', value: '300M', icon: Zap, color: 'text-amber-400' },
@@ -53,51 +54,35 @@ const projects = [
   },
 ];
 
-const blogPosts = [
-  {
-    id: 'post-1',
-    title: 'Zero Downtime Architecture: Migrating From AWS Kinesis to Apache Kafka at Scale',
-    excerpt: 'A technical walk-through of migrating low-latency live event streams from managed Kinesis to dedicated Kafka clusters while preserving end-to-end delivery guarantees.',
-    date: 'June 2026',
-    readTime: '7 min read',
-    category: 'Architecture',
-    content: `When handling streaming architectures matching global live match loads, managing throughput limits efficiently is critical. Our legacy Kinesis implementation faced sharp cost cliffs and configuration barriers during live viewer spikes. By moving to a dedicated Apache Kafka structure on AWS, we simplified state management, refined our custom retry configurations, and brought overall compute operational footprint costs down drastically.
-
-We introduced a partitioning strategy keyed by match_id and region, enforced exactly-once semantics through transactional producers, and separated audit events into a write-once Kafka topic. This migration strategy preserved all live pipelines with zero service interruption and reduced shadow data duplication by 42%.
-
-The article also includes the schema mapping, consumer group design, topic retention profile, and the observability blueprint we used to validate throughput under 20M events per minute.`
-  },
-  {
-    id: 'post-2',
-    title: 'Hunting Bottlenecks: Implementing Automated Coralogix Dashboards for Peak Node Flows',
-    excerpt: 'A guide to building automated dashboards and alerting rules that detect thread starvation, queue backpressure, and latency spikes before production traffic breaks.',
-    date: 'May 2026',
-    readTime: '5 min read',
-    category: 'Observability',
-    content: `Monitoring event loops in highly demanding Node.js environments requires telemetry depth beyond basic memory graphs. Using custom performance metrics emitted directly via K6 virtual users, we aggregated data flows into Coralogix to immediately flag thread pools starving for connections.
-
-I detail how we built synthetic transaction probes, derived service-level indicators from Kafka consumer lag, and created dashboard sections for CPU saturation, GC pause distribution, and request fan-out delays. The post also explains how we wired these dashboards into automated Slack and PagerDuty notifications, so the team could react to emerging issues before latency climbed above SLO targets.
-
-By shifting from reactive log alerts to proactive metric-driven alerts, the platform cut mean time to detection by 68% and prevented multiple peak-running outages during high-volume campaigns.`
-  }
-];
+const blogPosts = BLOG_POSTS.slice(0, 3);
 
 export default function Home() {
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12 space-y-24">
-      <section className="space-y-6 pt-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-400 font-mono">
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          Available for High-Scale Technical Consulting
+      <section className="grid gap-10 lg:grid-cols-[1fr_260px] items-center space-y-6 pt-4">
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            Available for High-Scale Technical Consulting
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight max-w-3xl leading-[1.15]">
+            Engineering Performance for Platforms Handling <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">Massive Scale</span>.
+          </h1>
+          <p className="text-zinc-400 text-lg sm:text-xl max-w-2xl font-light leading-relaxed">
+            Hi, I am <strong className="text-zinc-200 font-semibold">Hari Sireddi</strong>. I design microservices, configure fault-tolerant event buses, and harden cloud systems utilizing NestJS, Kafka, and AWS.
+          </p>
         </div>
-        <h1 className="text-4xl sm:text-6xl font-bold tracking-tight max-w-3xl leading-[1.15]">
-          Engineering Performance for Platforms Handling <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">Massive Scale</span>.
-        </h1>
-        <p className="text-zinc-400 text-lg sm:text-xl max-w-2xl font-light leading-relaxed">
-          Hi, I am <strong className="text-zinc-200 font-semibold">Hari Sireddi</strong>. I design microservices, configure fault-tolerant event buses, and harden cloud systems utilizing NestJS, Kafka, and AWS.
-        </p>
+
+        <div className="relative isolate overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950/70 p-5 shadow-[0_30px_90px_-50px_rgba(15,23,42,0.9)]">
+          <img
+            src="/profile-sample.svg"
+            alt="Profile sample"
+            className="h-full w-full rounded-[1.75rem] object-cover"
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+        </div>
       </section>
 
       <section id="skills" className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -209,6 +194,16 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="border-t border-zinc-800 pt-6">
+            <a
+              href="/blog"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-brand transition-colors hover:text-white"
+            >
+              More blogs
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </div>
