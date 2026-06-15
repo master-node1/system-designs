@@ -20,11 +20,12 @@ export default function WabaCampaignManagerPage() {
           <div className="mt-4 grid gap-6">
             <div>
               <div className="text-sm text-zinc-300 mb-2">Infrastructure HLD (preview)</div>
-              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800">
+              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/60 p-1">
                 <iframe
                   title="Infrastructure HLD"
                   src="https://drive.google.com/file/d/1Sh6jIflDXGErtmv4S0Kz9cfnmw4Vwo23/preview"
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 rounded-sm"
+                  style={{ transform: 'scale(1.03)', transformOrigin: 'center', filter: 'contrast(1.05) brightness(1.02)' }}
                   allowFullScreen
                 />
               </div>
@@ -32,11 +33,12 @@ export default function WabaCampaignManagerPage() {
 
             <div>
               <div className="text-sm text-zinc-300 mb-2">Application HLD (preview)</div>
-              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800">
+              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/60 p-1">
                 <iframe
                   title="Application HLD"
                   src="https://drive.google.com/file/d/1qcw8Wjxa5IaOJ4PX8XnBlucrHokJWOm8/preview"
-                  className="w-full h-full border-0"
+                  className="w-full h-full border-0 rounded-sm"
+                  style={{ transform: 'scale(1.03)', transformOrigin: 'center', filter: 'contrast(1.05) brightness(1.02)' }}
                   allowFullScreen
                 />
               </div>
