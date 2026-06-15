@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Cpu, Zap, Radio, Code2, Database, Layers, ArrowUpRight } from 'lucide-react';
+import { Cpu, Zap, Radio, Code2, Database, Layers, ArrowUpRight, Phone, Linkedin, Github } from 'lucide-react';
 import { BLOG_POSTS } from '@/lib/blogs';
 
 const skills = [
@@ -75,13 +75,26 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="relative isolate overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950/70 p-5 shadow-[0_30px_90px_-50px_rgba(15,23,42,0.9)]">
-          <img
-            src="/profile-sample.svg"
-            alt="Profile sample"
-            className="h-full w-full rounded-[1.75rem] object-cover"
-          />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="space-y-4">
+          <div className="relative isolate overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950/70 p-5 shadow-[0_30px_90px_-50px_rgba(15,23,42,0.9)]">
+            <img
+              src="/profile-sample.svg"
+              alt="Profile sample"
+              className="h-full w-full rounded-[1.75rem] object-cover"
+            />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
+          <div className="flex gap-3 justify-center">
+            <a href="tel:+919398422643" className="p-3 rounded-lg border border-zinc-800 bg-surface/50 hover:border-brand hover:bg-zinc-900/50 transition-all" title="Call me">
+              <Phone className="w-5 h-5 text-zinc-400 hover:text-brand" />
+            </a>
+            <a href="https://www.linkedin.com/in/sateesh-raja-seereddy-2631a5178/" target="_blank" rel="noreferrer" className="p-3 rounded-lg border border-zinc-800 bg-surface/50 hover:border-brand hover:bg-zinc-900/50 transition-all" title="LinkedIn">
+              <Linkedin className="w-5 h-5 text-zinc-400 hover:text-brand" />
+            </a>
+            <a href="https://github.com/master-node1" target="_blank" rel="noreferrer" className="p-3 rounded-lg border border-zinc-800 bg-surface/50 hover:border-brand hover:bg-zinc-900/50 transition-all" title="GitHub">
+              <Github className="w-5 h-5 text-zinc-400 hover:text-brand" />
+            </a>
+          </div>
         </div>
       </section>
 

@@ -36,8 +36,9 @@ export default function RootLayout({
           <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>© 2026 Hari Venkata Sateesh Raja Sireddi. Built for high availability.</div>
             <div className="flex gap-4">
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="hover:text-zinc-300 flex items-center gap-1">LinkedIn <Link2 className="w-3 h-3" /></a>
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-zinc-300 flex items-center gap-1">GitHub <Link2 className="w-3 h-3" /></a>
+              <a href="tel:+919398422643" className="hover:text-zinc-300 flex items-center gap-1">+91 9398422643 <Link2 className="w-3 h-3" /></a>
+              <a href="https://www.linkedin.com/in/sateesh-raja-seereddy-2631a5178/" target="_blank" rel="noreferrer" className="hover:text-zinc-300 flex items-center gap-1">LinkedIn <Link2 className="w-3 h-3" /></a>
+              <a href="https://github.com/master-node1" target="_blank" rel="noreferrer" className="hover:text-zinc-300 flex items-center gap-1">GitHub <Link2 className="w-3 h-3" /></a>
             </div>
           </div>
         </footer>
