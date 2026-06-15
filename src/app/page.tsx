@@ -5,17 +5,17 @@ import { Code2, Database, Layers, ArrowUpRight, Phone, Linkedin, Github } from '
 import { BLOG_POSTS } from '@/lib/blogs';
 
 const skills = [
-  { label: 'Concurrent Traffic Target', value: '300M', icon: '/skills/traffic.png', color: 'text-amber-400' },
   { label: 'Years Developing Microservices', value: '5+', icon: '/skills/experience.png', color: 'text-blue-400' },
   { label: 'Event Driven Architecture', value: 'Kafka', icon: '/skills/kafka.png', color: 'text-emerald-400' },
+  { label: 'Backend', value: 'Node JS', icon: '/skills/nodejs.png', color: 'text-pink-400' },
   { label: 'Cloud-Native Infrastructure', value: 'AWS EKS', icon: '/skills/aws-eks.png', color: 'text-violet-400' },
+  { label: 'Frame Work', value: 'NestJS, ExpressJS', icon: '/skills/framework.png', color: 'text-pink-400' },
+  { label: 'Database', value: 'PostgreSQL, Dynamo DB, Mongo DB', icon: '/skills/database.png', color: 'text-pink-400' },
   { label: 'Serverless Solutions', value: 'Lambda', icon: '/skills/lambda.png', color: 'text-pink-400' },
   { label: 'S3', value: 'S3', icon: '/skills/s3.png', color: 'text-pink-400' },
   { label: 'Websocket', value: 'socket.io', icon: '/skills/websocket.png', color: 'text-pink-400' },
-  { label: 'Backend', value: 'Node JS', icon: '/skills/nodejs.png', color: 'text-pink-400' },
-  { label: 'Database', value: 'PostgreSQL, Dynamo DB, Mongo DB', icon: '/skills/database.png', color: 'text-pink-400' },
-  { label: 'Frame Work', value: 'NestJS, ExpressJS', icon: '/skills/framework.png', color: 'text-pink-400' },
   { label: 'CI/CD', value: 'Git Actions', icon: '/skills/ci-cd.png', color: 'text-pink-400' },
+  { label: 'Concurrent Traffic Target', value: '300M', icon: '/skills/traffic.png', color: 'text-amber-400' },
   { label: 'IaC', value: 'Terraform', icon: '/skills/terraform.png', color: 'text-pink-400' },
 ];
 
