@@ -1,15 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Cpu, Zap, Radio, Code2, Database, Layers, ArrowUpRight, Phone, Linkedin, Github } from 'lucide-react';
+import { Code2, Database, Layers, ArrowUpRight, Phone, Linkedin, Github } from 'lucide-react';
 import { BLOG_POSTS } from '@/lib/blogs';
 
 const skills = [
-  { label: 'Concurrent Traffic Target', value: '300M', icon: Zap, color: 'text-amber-400' },
-  { label: 'Years Developing Microservices', value: '5+', icon: Cpu, color: 'text-blue-400' },
-  { label: 'Event Driven Architecture', value: 'Kafka', icon: Radio, color: 'text-emerald-400' },
-  { label: 'Cloud-Native Infrastructure', value: 'AWS EKS', icon: Layers, color: 'text-violet-400' },
-  { label: 'Serverless Solutions', value: 'Lambda', icon: ArrowUpRight, color: 'text-pink-400' },
+  { label: 'Concurrent Traffic Target', value: '300M', icon: '/skills/traffic.png', color: 'text-amber-400' },
+  { label: 'Years Developing Microservices', value: '5+', icon: '/skills/experience.png', color: 'text-blue-400' },
+  { label: 'Event Driven Architecture', value: 'Kafka', icon: '/skills/kafka.png', color: 'text-emerald-400' },
+  { label: 'Cloud-Native Infrastructure', value: 'AWS EKS', icon: '/skills/aws-eks.png', color: 'text-violet-400' },
+  { label: 'Serverless Solutions', value: 'Lambda', icon: '/skills/lambda.png', color: 'text-pink-400' },
+  { label: 'S3', value: 'S3', icon: '/skills/s3.png', color: 'text-pink-400' },
+  { label: 'Websocket', value: 'socket.io', icon: '/skills/websocket.png', color: 'text-pink-400' },
+  { label: 'Backend', value: 'Node JS', icon: '/skills/nodejs.png', color: 'text-pink-400' },
+  { label: 'Database', value: 'PostgreSQL, Dynamo DB, Mongo DB', icon: '/skills/database.png', color: 'text-pink-400' },
+  { label: 'Frame Work', value: 'NestJS, ExpressJS', icon: '/skills/framework.png', color: 'text-pink-400' },
+  { label: 'CI/CD', value: 'Git Actions', icon: '/skills/ci-cd.png', color: 'text-pink-400' },
+  { label: 'IaC', value: 'Terraform', icon: '/skills/terraform.png', color: 'text-pink-400' },
 ];
 
 const experiences = [
@@ -58,9 +65,12 @@ const blogPosts = BLOG_POSTS.slice(0, 3);
 
 export default function Home() {
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [showAllSkills, setShowAllSkills] = useState(false);
+
+  const visibleSkills = showAllSkills ? skills : skills.slice(0, 5);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12 space-y-24">
+    <div className="max-w-5xl mx-auto px-6 py-12 space-y-16">
       <section className="grid gap-10 lg:grid-cols-[1fr_260px] items-center space-y-6 pt-4">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-400 font-mono">
@@ -99,19 +109,32 @@ export default function Home() {
       </section>
 
       <section id="skills" className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {skills.map((skill, i) => {
-          const Icon = skill.icon;
-          return (
-            <div key={i} className="border border-zinc-800/80 bg-surface/50 p-6 rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-xs font-mono tracking-wider text-zinc-500 uppercase">{skill.label}</p>
-                <p className="text-3xl font-bold mt-1 text-zinc-100">{skill.value}</p>
-              </div>
-              <Icon className={`w-8 h-8 ${skill.color} opacity-80`} />
+        {visibleSkills.map((skill, i) => (
+          <div key={i} className="border border-zinc-800/80 bg-surface/50 p-6 rounded-xl flex items-center justify-between">
+            <div>
+              <p className="text-xs font-mono tracking-wider text-zinc-500 uppercase">{skill.label}</p>
+              <p className="text-3xl font-bold mt-1 text-zinc-100">{skill.value}</p>
             </div>
-          );
-        })}
+            <img
+              src={skill.icon}
+              alt={`${skill.label} icon`}
+              className="w-12 h-12 rounded-full bg-zinc-950/80 p-1"
+            />
+          </div>
+        ))}
       </section>
+
+      {skills.length > 5 && (
+        <div className="flex justify-center pt-2">
+          <button
+            type="button"
+            onClick={() => setShowAllSkills((prev) => !prev)}
+            className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-sm font-semibold text-brand transition hover:border-brand hover:bg-zinc-900"
+          >
+            {showAllSkills ? 'Show less' : `Show ${skills.length - 5} more`}
+          </button>
+        </div>
+      )}
 
       <hr className="border-zinc-900" />
 
