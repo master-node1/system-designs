@@ -17,28 +17,31 @@ export default function WabaCampaignManagerPage() {
           <p className="mt-3 text-sm text-zinc-400 leading-7">
             Reference high-level design documents for infra and application architecture below.
           </p>
-          <ul className="mt-4 list-disc list-inside text-sm text-zinc-300 space-y-2">
-            <li>
-              <a
-                className="text-sky-400 hover:underline"
-                href="https://drive.google.com/file/d/1Sh6jIflDXGErtmv4S0Kz9cfnmw4Vwo23/view?usp=drive_link"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Infrastructure HLD (Drive)
-              </a>
-            </li>
-            <li>
-              <a
-                className="text-sky-400 hover:underline"
-                href="https://drive.google.com/file/d/1qcw8Wjxa5IaOJ4PX8XnBlucrHokJWOm8/view?usp=drive_link"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Application HLD (Drive)
-              </a>
-            </li>
-          </ul>
+          <div className="mt-4 grid gap-6">
+            <div>
+              <div className="text-sm text-zinc-300 mb-2">Infrastructure HLD (preview)</div>
+              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800">
+                <iframe
+                  title="Infrastructure HLD"
+                  src="https://drive.google.com/file/d/1Sh6jIflDXGErtmv4S0Kz9cfnmw4Vwo23/preview"
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm text-zinc-300 mb-2">Application HLD (preview)</div>
+              <div className="w-full h-96 overflow-hidden rounded-lg border border-zinc-800">
+                <iframe
+                  title="Application HLD"
+                  src="https://drive.google.com/file/d/1qcw8Wjxa5IaOJ4PX8XnBlucrHokJWOm8/preview"
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
