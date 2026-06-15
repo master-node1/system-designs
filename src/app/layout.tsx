@@ -25,7 +25,7 @@ export default function RootLayout({
               <a href="/#experience" className="hover:text-zinc-100 transition-colors">Experience</a>
               <a href="/#projects" className="hover:text-zinc-100 transition-colors">Projects</a>
               <a href="/#blog" className="hover:text-zinc-100 transition-colors">Insights</a>
-              <a href="/logging" className="hover:text-zinc-100 transition-colors">System Design</a>
+              <a href="/designs" className="hover:text-zinc-100 transition-colors">System Design</a>
             </nav>
           </div>
         </header>
